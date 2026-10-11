@@ -54,3 +54,7 @@ resistivity-1d-inversion/
 ├── requirements.txt         # Project dependencies
 ├── .gitignore
 └── README.md                # Documentation
+
+### Visual Output
+
+![1D Resistivity Inversion Plot](data/sounding_plot.png)
