@@ -58,3 +58,11 @@ resistivity-1d-inversion/
 ### Visual Output
 
 ![1D Resistivity Inversion Plot](data/sounding_plot.png)
+
+## Sample Outputs
+
+### 1D Sounding Curve & WinResist Fit (Station 126m)
+![VES 1D Fit](outputs/ves_2_station_126m_fit.png)
+
+### 2D CST Resistivity Pseudosection
+![2D CST Profile](outputs/cst_2d_pseudosection.png)
