@@ -1,67 +1,34 @@
+import os
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import numpy as np
+from src.forward_model import calculate_apparent_resistivity
 
 
-def plot_sounding_results(
-    ab_half: np.ndarray,
-    apparent_resistivity: np.ndarray,
-    resistivities: list[float],
-    thicknesses: list[float],
-):
-    """Generates a publication-grade 2-panel figure comparing the 1D Earth model
-
-    profile against the Schlumberger sounding curve.
+def plot_ves_curve(ab2_field, rho_field, rho_model, h_model, station_name, output_dir="outputs"):
     """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5.5))
+    Plots raw field data against WinResist model response.
+    """
+    # Generate smooth AB/2 curve for forward model line
+    ab2_smooth = np.logspace(np.log10(min(ab2_field)), np.log10(max(ab2_field)), 100)
+    rho_model_curve = calculate_apparent_resistivity(ab2_smooth, rho_model, h_model)
 
-    # --- Panel 1: Layered Earth Profile ---
-    cum_depths = np.cumsum(thicknesses)
-    max_depth = cum_depths[-1] * 1.5
+    plt.figure(figsize=(7, 6))
 
-    depth_steps = [0]
-    rho_steps = [resistivities[0]]
+    # Field points
+    plt.loglog(ab2_field, rho_field, 'ro', label='Observed Field Data (PASI 16GL-N)')
 
-    for i in range(len(thicknesses)):
-        depth_steps.extend([cum_depths[i], cum_depths[i]])
-        rho_steps.extend([resistivities[i], resistivities[i + 1]])
+    # WinResist model curve
+    plt.loglog(ab2_smooth, rho_model_curve, 'b-', linewidth=2, label='Model Response (WinResist)')
 
-    depth_steps.append(max_depth)
-    rho_steps.append(resistivities[-1])
-
-    ax1.plot(
-        rho_steps,
-        depth_steps,
-        color="crimson",
-        linewidth=2.5,
-        label="Subsurface Model",
-    )
-    ax1.set_xscale("log")
-    ax1.invert_yaxis()
-    ax1.set_xlabel(r"True Resistivity $\rho$ ($\Omega\cdot\mathrm{m}$)")
-    ax1.set_ylabel("Depth $z$ (m)")
-    ax1.set_title("Target 1D Subsurface Model Profile")
-    ax1.grid(True, which="both", ls="--", alpha=0.5)
-
-    # Format logarithmic ticks to prevent minor-label clutter
-    ax1.xaxis.set_major_formatter(ticker.FormatStrFormatter("%g"))
-    ax1.xaxis.set_minor_formatter(ticker.NullFormatter())
-
-    # --- Panel 2: Schlumberger Sounding Curve ---
-    ax2.loglog(
-        ab_half,
-        apparent_resistivity,
-        "o-",
-        color="navy",
-        linewidth=2,
-        markersize=5,
-        label="Synthetic Apparent Resistivity",
-    )
-    ax2.set_xlabel(r"Electrode Spacing $AB/2$ (m)")
-    ax2.set_ylabel(r"Apparent Resistivity $\rho_a$ ($\Omega\cdot\mathrm{m}$)")
-    ax2.set_title("Forward Schlumberger Sounding Curve")
-    ax2.grid(True, which="both", ls="--", alpha=0.5)
-    ax2.legend()
+    plt.title(f'1D Sounding Curve & Inversion Fit ({station_name})', fontweight='bold')
+    plt.xlabel('AB/2 Spacing (m)')
+    plt.ylabel('Apparent Resistivity (Ω·m)')
+    plt.grid(True, which="both", ls="--", alpha=0.6)
+    plt.legend()
     plt.tight_layout()
-    plt.savefig("data/sounding_plot.png", dpi=300, bbox_inches="tight")
-    plt.show()
+
+    os.makedirs(output_dir, exist_ok=True)
+    out_path = os.path.join(output_dir, f"{station_name.lower().replace(' ', '_')}_fit.png")
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"[✓] Generated VES Fit Plot: {out_path}")
