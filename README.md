@@ -1,68 +1,53 @@
-# 1D Subsurface Electrical Resistivity Forward & Non-Linear Inversion Modeling
+# Integrated Geophysical Analysis Suite (Eruwa Site)
 
-A modular Python framework for simulating and inverting 1D vertical electrical sounding (VES) data using the Schlumberger array configuration. This package implements digital linear filtering for fast forward response calculations and non-linear least-squares optimization for parameter recovery under noisy field conditions.
-
----
-
-## 📌 Features
-
-- **Forward Simulation**: Uses Guptasarma's 10-point digital linear filter algorithm to compute apparent resistivity responses over arbitrary $n$-layered Earth models.
-- **Synthetic Field Noise**: Injects realistic Gaussian relative noise ($\sigma = 5\%$) to simulate real-world field measurement uncertainties.
-- **Non-Linear Inversion Engine**: Implements the Levenberg-Marquardt optimization method (`scipy.optimize.least_squares`) in logarithmic parameter space to enforce parameter positivity and recover true layer resistivities ($\rho$) and thicknesses ($h$).
-- **Data Export & Visualization**: Exports simulated sounding curves to structured CSV format and plots dual-panel publication-ready figures (Subsurface Layer Profile vs. Sounding Curve).
+An integrated Python data processing and computational geophysics suite developed for mapping subsurface lithology, bedrock topography, and groundwater potential in basement complex terrains. This package processes field data acquired at the Eruwa Basement Complex site in Southwestern Nigeria, combining 2D Electrical Resistivity Profiling (CST), 1D Vertical Electrical Sounding (VES), and Very Low Frequency Electromagnetic (VLF-EM) filtering.
 
 ---
 
-## 🧮 Mathematical Formulation
+## 📌 Key Features
 
-### Forward Problem (Linear Filtering Theory)
-For a Schlumberger array with electrode half-spacing $s = AB/2$, the apparent resistivity $\rho_a(s)$ is computed via the Hankel transform integral:
-
-$$\rho_a(s) = \sum_{k=1}^{N} T(\lambda_k) \cdot f_k$$
-
-Where:
-- $f_k$ represents the Guptasarma (1979) filter weights evaluated at logarithmic sampling locations $\lambda_k = 10^{\text{shift}_k} / s$.
-- $T(\lambda)$ is the resistivity transform function calculated recursively from the bottom infinite half-space layer $n$ up to the surface layer 1:
-
-$$T_i(\lambda) = \frac{T_{i+1}(\lambda) + \rho_i \tanh(\lambda h_i)}{1 + \frac{T_{i+1}(\lambda)}{\rho_i} \tanh(\lambda h_i)}$$
-
-### Inverse Problem (Levenberg-Marquardt Least-Squares)
-The objective function minimizes the logarithmic relative misfit between observed field data $\mathbf{d}_{\text{obs}}$ and predicted response $\mathbf{d}_{\text{pred}}(\mathbf{m})$:
-
-$$\Phi(\mathbf{m}) = \left\Vert{} \ln(\mathbf{d}_{\text{obs}}) - \ln(\mathbf{d}_{\text{pred}}(\mathbf{m})) \right\Vert{}_2^2$$
-
-Optimization is performed over transformed log-parameters $\mathbf{m} = [\ln(\mathbf{\rho}), \ln(\mathbf{h})]^T$.
+* **2D CST Resistivity Pseudosections:** Interpolates multi-spacing Wenner array profiling data ($a = 10\text{m} - 60\text{m}$) into continuous logarithmic 2D resistivity cross-sections across a 200m traverse.
+* **VLF-EM Fraser Filtering:** Executes a 4-point digital Fraser filter algorithm on raw In-Phase and Quadrature field measurements to highlight conductive fracture zones and structural discontinuities.
+* **1D VES Forward Modeling:** Simulates Schlumberger apparent resistivity curves using digital linear filter theory and matches field curves directly against commercial WinResist inversion parameters.
+* **Modular Codebase:** Cleanly organized inside `src/` modules for electrical, electromagnetic, modeling, and visualization tasks, executed via a single pipeline script (`run_pipeline.py`).
 
 ---
 
-## 📁 Repository Structure
+## 📐 Field & Modeling Methodology
 
-```text
-resistivity-1d-inversion/
-│
-├── data/
-│   └── sounding_data.csv    # Exported synthetic sounding curve
-│
-├── src/
-│   ├── __init__.py
-│   ├── forward_model.py     # Guptasarma 10-point forward engine & noise generator
-│   ├── inversion.py         # Levenberg-Marquardt optimization solver
-│   ├── visualize.py         # Publication-grade plotting routines
-│   └── exporter.py          # Data export utility
-│
-├── main.py                  # Pipeline execution script
-├── requirements.txt         # Project dependencies
-├── .gitignore
-└── README.md                # Documentation
+### 1. Constant Separation Traversing (CST)
+* **Configuration:** Wenner Array ($a = 10\text{m}, 20\text{m}, 30\text{m}, 40\text{m}, 50\text{m}, 60\text{m}$)
+* **Traverse Length:** 200 m (21 measurement stations at 10 m spacing)
+* **Target:** Delineating lateral resistivity contrasts between shallow resistive basement ridges ($0\text{m} - 80\text{m}$) and deeply weathered conductive troughs ($115\text{m} - 145\text{m}$).
 
-### Visual Output
+### 2. Vertical Electrical Sounding (VES)
+* **Configuration:** Schlumberger Array ($AB/2$ up to 80m)
+* **Primary Target:** Station 126m (VES 2)
+* **Geoelectric Interpretation:** Classic H-Type curve ($\rho_1 > \rho_2 < \rho_3$) revealing an 8.8m thick saturated weathered aquifer ($\rho_2 = 76.5\,\Omega\cdot\text{m}$) overlying fresh bedrock ($\rho_3 = 2914\,\Omega\cdot\text{m}$).
 
-![1D Resistivity Inversion Plot](data/sounding_plot.png)
+### 3. VLF-EM Filtering
+* **Filter Algorithm:** 4-Point Digital Fraser Filter
+  $$F_{2,3} = (q_3 + q_4) - (q_1 + q_2)$$
+* **Objective:** Converting inflections into positive peaks to locate vertical conductive fractures and subsurface shear zones.
 
-## Sample Outputs
+---
 
-### 1D Sounding Curve & WinResist Fit (Station 126m)
+## 📸 Sample Visualizations
+
+### 1D Sounding Fit vs. WinResist Model (Station 126m)
 ![VES 1D Fit](outputs/ves_2_station_126m_fit.png)
 
 ### 2D CST Resistivity Pseudosection
-![2D CST Profile](outputs/cst_2d_pseudosection.png)
+![2D CST Pseudosection](outputs/cst_2d_pseudosection.png)
+
+### VLF-EM Fraser Filtered Profile
+![VLF Profile](outputs/vlf_fraser_profile.png)
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/TheABZ/geophysical-eruwa-suite.git](https://github.com/TheABZ/geophysical-eruwa-suite.git)
+cd geophysical-eruwa-suite
