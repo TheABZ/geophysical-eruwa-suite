@@ -24,12 +24,24 @@ def plot_2d_cst_pseudosection(csv_path, output_dir="outputs"):
 
     X, Z, Rho = np.array(X_list), np.array(Z_list), np.array(Rho_list)
 
+    # 2D Grid Interpolation
     grid_x, grid_z = np.mgrid[min(X):max(X):200j, min(Z):max(Z):100j]
     grid_rho = griddata((X, Z), Rho, (grid_x, grid_z), method='cubic')
 
+    # Filter grid to positive values to avoid log scale warnings
+    grid_rho_clean = np.where(grid_rho > 0, grid_rho, np.nan)
+
+    valid_rho = Rho[Rho > 0]
+    vmin = np.nanmin(valid_rho) if len(valid_rho) > 0 else 10.0
+    vmax = np.nanmax(valid_rho) if len(valid_rho) > 0 else 1000.0
+
     plt.figure(figsize=(10, 4.5))
-    contour = plt.contourf(grid_x, grid_z, grid_rho, levels=50, cmap='turbo',
-                           norm=LogNorm(vmin=np.nanmin(Rho), vmax=np.nanmax(Rho)))
+    contour = plt.contourf(
+        grid_x, grid_z, grid_rho_clean,
+        levels=50,
+        cmap='turbo',
+        norm=LogNorm(vmin=vmin, vmax=vmax)
+    )
     cbar = plt.colorbar(contour)
     cbar.set_label('Apparent Resistivity (Ω·m)', rotation=270, labelpad=15)
 
@@ -39,6 +51,7 @@ def plot_2d_cst_pseudosection(csv_path, output_dir="outputs"):
     plt.ylabel('Pseudodepth (m)')
     plt.tight_layout()
 
+    os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, "cst_2d_pseudosection.png")
     plt.savefig(out_path, dpi=300)
     plt.close()
